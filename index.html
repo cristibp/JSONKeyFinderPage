@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary SEO Meta Tags -->
+  <title>JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs</title>
+  <meta name="title" content="JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs">
+  <meta name="description"
+    content="Navigate and search JSON keys, localization bundles, and configurations in IntelliJ IDEA, WebStorm, PyCharm, and JetBrains IDEs with Ctrl+Click and instant ANTLR4 search. 100% offline & private.">
+  <meta name="keywords"
+    content="IntelliJ plugin, JSON key finder, i18n key search, JetBrains marketplace, WebStorm JSON navigation, translation key locator, react-intl, vue-i18n, PyCharm, PhpStorm, Android Studio, IDE plugin">
+  <meta name="author" content="Cristian Batusel">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://cristibp.github.io/JSONKeyFinder/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cristibp.github.io/JSONKeyFinder/">
+  <meta property="og:title" content="JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs">
+  <meta property="og:description"
+    content="Ctrl+Click to jump directly to JSON key definitions in your JetBrains IDE. 100% offline, zero network requests, ANTLR4 AST indexing.">
+  <meta property="og:image"
+    content="https://raw.githubusercontent.com/cristibp/JSONKeyFinder/master/src/main/resources/META-INF/pluginIcon.svg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://cristibp.github.io/JSONKeyFinder/">
+  <meta property="twitter:title" content="JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs">
+  <meta property="twitter:description"
+    content="Stop grepping through huge JSON localization bundles. Jump directly to definitions with Ctrl+Click or Cmd+Click.">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml"
+    href="https://raw.githubusercontent.com/cristibp/JSONKeyFinder/master/src/main/resources/META-INF/pluginIcon.svg">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <!-- JSON-LD Structured Data for Search Engines -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "JSON Key Finder",
+    "operatingSystem": "Windows, macOS, Linux",
+    "applicationCategory": "DeveloperApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "JetBrains IDE plugin providing instant navigation and search for JSON keys and localization files with Ctrl+Click support and ANTLR4 indexing.",
+    "url": "https://plugins.jetbrains.com/plugin/15064-json-key-finder",
+    "author": {
+      "@type": "Person",
+      "name": "Cristian Batusel"
+    }
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg-dark: #0D1117;
+      --bg-surface: #161B22;
+      --bg-surface-elevated: #21262D;
+      --bg-glass: rgba(22, 27, 34, 0.75);
+      --border-color: rgba(240, 246, 252, 0.1);
+      --border-glow: rgba(108, 92, 231, 0.35);
+      --text-primary: #F0F6FC;
+      --text-secondary: #8B949E;
+      --text-muted: #6E7681;
+
+      --accent-purple: #7952DE;
+      --accent-blue: #087CFA;
+      --accent-cyan: #00D2FF;
+      --accent-green: #21D789;
+      --accent-red: #FF4757;
+      --accent-orange: #FFA502;
+
+      --gradient-hero: linear-gradient(135deg, #7952DE 0%, #087CFA 50%, #00D2FF 100%);
+      --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Subtle background grid pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(121, 82, 222, 0.15), transparent 100%);
+      background-size: 32px 32px, 100% 100%;
+      background-repeat: repeat, no-repeat;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(13, 17, 23, 0.8);
+      border-bottom: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .nav-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 72px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      background: #1e1e24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .brand-icon img {
+      width: 28px;
+      height: 28px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 22px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--gradient-hero);
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(121, 82, 222, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 26px rgba(121, 82, 222, 0.6);
+      filter: brightness(1.1);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-lg {
+      padding: 14px 30px;
+      font-size: 1.05rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      position: relative;
+    }
+
+    .trust-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: var(--radius-full);
+      background: rgba(33, 215, 137, 0.1);
+      border: 1px solid rgba(33, 215, 137, 0.3);
+      color: var(--accent-green);
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(1.2);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .hero-title {
+      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+
+    .text-gradient {
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 2vw, 1.35rem);
+      color: var(--text-secondary);
+      max-width: 760px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    .hero-metrics {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      flex-wrap: wrap;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .metric-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .metric-item strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Live Interactive Simulator Section */
+    .simulator-section {
+      padding: 40px 0 80px;
+    }
+
+    .simulator-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .simulator-header h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .simulator-header p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .ide-window {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      margin: 0 auto;
+      max-width: 1040px;
+    }
+
+    .ide-titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 42px;
+      padding: 0 16px;
+      background: #0f1318;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .window-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .window-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-close {
+      background: #FF5F56;
+    }
+
+    .dot-min {
+      background: #FFBD2E;
+    }
+
+    .dot-max {
+      background: #27C93F;
+    }
+
+    .ide-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .ide-tabs {
+      display: flex;
+      align-items: center;
+      background: #13171f;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+
+    .ide-tab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      border-right: 1px solid var(--border-color);
+      cursor: pointer;
+      background: #13171f;
+      transition: all 0.2s;
+    }
+
+    .ide-tab.active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border-top: 2px solid var(--accent-purple);
+    }
+
+    .ide-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 380px;
+    }
+
+    @media (max-width: 768px) {
+      .ide-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ide-pane {
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+
+    .pane-code {
+      border-right: 1px solid var(--border-color);
+      background: #141820;
+    }
+
+    .pane-json {
+      background: #161B22;
+      position: relative;
+    }
+
+    .pane-header-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Syntax Highlighting */
+    .syn-keyword {
+      color: #FF7B72;
+      font-weight: 500;
+    }
+
+    .syn-func {
+      color: #D2A8FF;
+    }
+
+    .syn-string {
+      color: #A5D6FF;
+    }
+
+    .syn-key {
+      color: #7EE787;
+      font-weight: 500;
+    }
+
+    .syn-comment {
+      color: #8B949E;
+      font-style: italic;
+    }
+
+    .syn-line {
+      display: block;
+    }
+
+    .syn-line-num {
+      color: #484F58;
+      display: inline-block;
+      width: 28px;
+      user-select: none;
+    }
+
+    /* Clickable interactive keys */
+    .interactive-key {
+      background: rgba(121, 82, 222, 0.2);
+      border: 1px dashed rgba(121, 82, 222, 0.6);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: #79c0ff;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .interactive-key:hover {
+      background: rgba(121, 82, 222, 0.4);
+      border-color: var(--accent-purple);
+      color: #fff;
+    }
+
+    .interactive-key::after {
+      content: 'Ctrl+Click to jump';
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #087CFA;
+      color: #fff;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .interactive-key:hover::after {
+      opacity: 1;
+    }
+
+    /* Target highlight in JSON pane */
+    .json-highlight-target {
+      background: rgba(33, 215, 137, 0.25);
+      border-left: 3px solid var(--accent-green);
+      padding-left: 6px;
+      margin-left: -9px;
+      animation: highlightFlash 1.5s ease-out;
+      border-radius: 2px;
+    }
+
+    @keyframes highlightFlash {
+      0% {
+        background: rgba(33, 215, 137, 0.6);
+      }
+
+      100% {
+        background: rgba(33, 215, 137, 0.15);
+      }
+    }
+
+    .simulator-hint {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 14px;
+    }
+
+    .shortcut-tag {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-color);
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+
+    /* Trust & Security Section */
+    .trust-section {
+      padding: 80px 0;
+      background: linear-gradient(180deg, var(--bg-dark) 0%, #10141c 100%);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title-wrap {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .section-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+    }
+
+    .section-subtitle {
+      color: var(--text-secondary);
+      max-width: 650px;
+      margin: 0 auto;
+      font-size: 1.05rem;
+    }
+
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .trust-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 28px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .trust-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .trust-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+
+    .icon-green {
+      background: rgba(33, 215, 137, 0.15);
+      color: var(--accent-green);
+    }
+
+    .icon-blue {
+      background: rgba(8, 124, 250, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .icon-purple {
+      background: rgba(121, 82, 222, 0.15);
+      color: var(--accent-purple);
+    }
+
+    .icon-orange {
+      background: rgba(255, 165, 2, 0.15);
+      color: var(--accent-orange);
+    }
+
+    .trust-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .trust-card p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    /* Features Grid */
+    .features-section {
+      padding: 90px 0;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 28px;
+    }
+
+    .feature-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 32px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-3px);
+    }
+
+    .feature-badge {
+      align-self: flex-start;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      margin-bottom: 16px;
+    }
+
+    .badge-purple {
+      background: rgba(121, 82, 222, 0.2);
+      color: #B388FF;
+    }
+
+    .badge-blue {
+      background: rgba(8, 124, 250, 0.2);
+      color: #82B1FF;
+    }
+
+    .badge-green {
+      background: rgba(33, 215, 137, 0.2);
+      color: #69F0AE;
+    }
+
+    .feature-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .feature-card p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .feature-snippet {
+      background: #0f1318;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: #E6EDF3;
+      margin-top: auto;
+    }
+
+    /* Comparison Table Section */
+    .comparison-section {
+      padding: 80px 0;
+      background: #11151c;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .compare-table th,
+    .compare-table td {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .compare-table th {
+      background: #10141c;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .compare-table th:last-child {
+      color: var(--accent-purple);
+      background: rgba(121, 82, 222, 0.08);
+    }
+
+    .compare-table td:last-child {
+      background: rgba(121, 82, 222, 0.04);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .icon-check {
+      color: var(--accent-green);
+      font-weight: bold;
+    }
+
+    .icon-cross {
+      color: #8B949E;
+    }
+
+    /* IDE Compatibility Grid */
+    .ides-section {
+      padding: 70px 0;
+      text-align: center;
+    }
+
+    .ide-logos-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      flex-wrap: wrap;
+      margin-top: 36px;
+    }
+
+    .ide-pill {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .ide-pill:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    /* FAQ Section */
+    .faq-section {
+      padding: 80px 0;
+    }
+
+    .faq-list {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .faq-item {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .faq-question {
+      padding: 20px 24px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .faq-question:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .faq-answer {
+      padding: 0 24px 20px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .faq-item.active .faq-answer {
+      display: block;
+    }
+
+    .faq-item.active .faq-toggle {
+      transform: rotate(180deg);
+    }
+
+    .faq-toggle {
+      transition: transform 0.2s;
+    }
+
+    /* CTA Section */
+    .cta-banner {
+      padding: 80px 0;
+      text-align: center;
+      position: relative;
+    }
+
+    .cta-box {
+      background: linear-gradient(135deg, rgba(121, 82, 222, 0.15) 0%, rgba(8, 124, 250, 0.15) 100%);
+      border: 1px solid rgba(121, 82, 222, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 60px 40px;
+      max-width: 900px;
+      margin: 0 auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .cta-box h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+
+    .cta-box p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto 32px;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border-color);
+      padding: 40px 0;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 16px;
+    }
+
+    .footer-links a {
+      color: var(--text-secondary);
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container nav-wrapper">
+      <a href="#" class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 400 400" width="26" height="26">
+            <path
+              d="M185 2 C215 2, 230 4, 245 8 C280 20, 310 50, 325 85 C335 110, 340 140, 340 170 C340 200, 335 230, 325 255 C310 290, 280 320, 245 332 L223 338 L223 352 L221 352 C219 351, 216 341, 211 340 L204 341 L201 357 L201 371 L208 372 L215 373 L215 375 L170 375 L170 373 L174 372 L176 372 L176 338 L171 338 L160 335 L150 330 L135 320 L125 310 L105 285 L95 265 C85 235, 80 205, 80 175 C80 145, 85 115, 95 85 C110 50, 140 20, 185 2 Z"
+              fill="#FF4757" />
+          </svg>
+        </div>
+        <span>JSON Key Finder</span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#demo">Interactive Demo</a></li>
+        <li><a href="#trust">Security & Trust</a></li>
+        <li><a href="#comparison">Why Us?</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+
+      <div class="nav-cta">
+        <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder" target="_blank" rel="noopener"
+          class="btn btn-primary">
+          <span>Get Plugin</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="container">
+      <div class="trust-badge-pill">
+        <span class="pulse-dot"></span>
+        <span>100% Offline & Private — Verified JetBrains Marketplace Plugin</span>
+      </div>
+
+      <h1 class="hero-title">
+        The Fastest Way to Find & Navigate<br />
+        <span class="text-gradient">JSON Keys in JetBrains IDEs</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Stop grepping blindly through massive i18n localization bundles and configs.
+        <b>Ctrl+Click</b> directly from your code to JSON definitions with instant ANTLR4-powered indexing.
+      </p>
+
+      <div class="hero-actions">
+        <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder" target="_blank" rel="noopener"
+          class="btn btn-primary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z" />
+          </svg>
+          <span>Install from Marketplace</span>
+        </a>
+        <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder/reviews" target="_blank" rel="noopener"
+          class="btn btn-secondary btn-lg">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+              d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+          </svg>
+          <span>Star on JetBrains</span>
+        </a>
+      </div>
+
+      <div class="hero-metrics">
+        <div class="metric-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span><strong>Zero Telemetry:</strong> 100% Offline & Safe</span>
+        </div>
+        <div class="metric-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          </svg>
+          <span><strong>ANTLR4 AST:</strong> Millisecond Lookups</span>
+        </div>
+        <div class="metric-item">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+          <span><strong>Compatible:</strong> 2024.x – 2026.x</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Interactive Live Simulator Section -->
+  <section id="demo" class="simulator-section">
+    <div class="container">
+      <div class="simulator-header">
+        <h2>Experience It In Action</h2>
+        <p>Click on any highlighted key in the code editor to see the IDE jump straight to its JSON definition.</p>
+      </div>
+
+      <div class="ide-window">
+        <!-- Titlebar -->
+        <div class="ide-titlebar">
+          <div class="window-controls">
+            <div class="window-dot dot-close"></div>
+            <div class="window-dot dot-min"></div>
+            <div class="window-dot dot-max"></div>
+          </div>
+          <div class="ide-title">JSON Key Finder — Project Preview</div>
+          <div style="width: 50px;"></div>
+        </div>
+
+        <!-- Tab Bar -->
+        <div class="ide-tabs">
+          <div class="ide-tab active" id="tab-code">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#61AFEF" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+            </svg>
+            <span>UserProfile.tsx</span>
+          </div>
+          <div class="ide-tab active" id="tab-json" style="border-top-color: #21D789;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#21D789" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <path d="M14 2v6h6" />
+            </svg>
+            <span>locales/en.json</span>
+          </div>
+        </div>
+
+        <!-- Editor Body -->
+        <div class="ide-body">
+          <!-- Left: Code Editor -->
+          <div class="ide-pane pane-code">
+            <div class="pane-header-label">
+              <span>TypeScript / React Component</span>
+              <span style="color: var(--accent-purple);">Interactive</span>
+            </div>
+
+            <span class="syn-line"><span class="syn-line-num">1</span><span class="syn-keyword">import</span> React
+              <span class="syn-keyword">from</span> <span class="syn-string">'react'</span>;</span>
+            <span class="syn-line"><span class="syn-line-num">2</span><span class="syn-keyword">import</span> {
+              useTranslation } <span class="syn-keyword">from</span> <span
+                class="syn-string">'react-i18next'</span>;</span>
+            <span class="syn-line"><span class="syn-line-num">3</span></span>
+            <span class="syn-line"><span class="syn-line-num">4</span><span class="syn-keyword">export const</span>
+              <span class="syn-func">UserProfile</span> = () =&gt; {</span>
+            <span class="syn-line"><span class="syn-line-num">5</span> <span class="syn-keyword">const</span> { t } =
+              <span class="syn-func">useTranslation</span>();</span>
+            <span class="syn-line"><span class="syn-line-num">6</span></span>
+            <span class="syn-line"><span class="syn-line-num">7</span> <span class="syn-keyword">return</span> (</span>
+            <span class="syn-line"><span class="syn-line-num">8</span> &lt;<span class="syn-keyword">div</span>
+              className=<span class="syn-string">"profile-card"</span>&gt;</span>
+            <span class="syn-line"><span class="syn-line-num">9</span> &lt;<span class="syn-keyword">h1</span>&gt;{<span
+                class="syn-func">t</span>(<span class="interactive-key"
+                onclick="simulateJump('title', 4)">"auth.login.title"</span>)}&lt;/<span
+                class="syn-keyword">h1</span>&gt;</span>
+            <span class="syn-line"><span class="syn-line-num">10</span> &lt;<span class="syn-keyword">p</span>&gt;{<span
+                class="syn-func">t</span>(<span class="interactive-key"
+                onclick="simulateJump('welcome', 5)">"auth.login.welcome"</span>)}&lt;/<span
+                class="syn-keyword">p</span>&gt;</span>
+            <span class="syn-line"><span class="syn-line-num">11</span> &lt;<span
+                class="syn-keyword">button</span>&gt;{<span class="syn-func">t</span>(<span class="interactive-key"
+                onclick="simulateJump('submit', 6)">"auth.login.submit"</span>)}&lt;/<span
+                class="syn-keyword">button</span>&gt;</span>
+            <span class="syn-line"><span class="syn-line-num">12</span> &lt;/<span
+                class="syn-keyword">div</span>&gt;</span>
+            <span class="syn-line"><span class="syn-line-num">13</span> );</span>
+            <span class="syn-line"><span class="syn-line-num">14</span>};</span>
+          </div>
+
+          <!-- Right: JSON Editor -->
+          <div class="ide-pane pane-json" id="json-pane">
+            <div class="pane-header-label">
+              <span>Target JSON Dictionary</span>
+              <span id="jump-status" style="color: var(--accent-green);">Ready</span>
+            </div>
+
+            <span class="syn-line"><span class="syn-line-num">1</span>{</span>
+            <span class="syn-line"><span class="syn-line-num">2</span> <span class="syn-key">"auth"</span>: {</span>
+            <span class="syn-line"><span class="syn-line-num">3</span> <span class="syn-key">"login"</span>: {</span>
+            <span class="syn-line" id="json-line-title"><span class="syn-line-num">4</span> <span
+                class="syn-key">"title"</span>: <span class="syn-string">"Welcome Back to Your Portal"</span>,</span>
+            <span class="syn-line" id="json-line-welcome"><span class="syn-line-num">5</span> <span
+                class="syn-key">"welcome"</span>: <span class="syn-string">"Please enter your credentials to log
+                in"</span>,</span>
+            <span class="syn-line" id="json-line-submit"><span class="syn-line-num">6</span> <span
+                class="syn-key">"submit"</span>: <span class="syn-string">"Sign In Securely"</span></span>
+            <span class="syn-line"><span class="syn-line-num">7</span> }</span>
+            <span class="syn-line"><span class="syn-line-num">8</span> },</span>
+            <span class="syn-line"><span class="syn-line-num">9</span> <span class="syn-key">"settings"</span>: {</span>
+            <span class="syn-line"><span class="syn-line-num">10</span> <span class="syn-key">"theme"</span>: <span
+                class="syn-string">"dark"</span></span>
+            <span class="syn-line"><span class="syn-line-num">11</span> }</span>
+            <span class="syn-line"><span class="syn-line-num">12</span>}</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="simulator-hint">
+        💡 <b>Pro Tip:</b> In IntelliJ, use <span class="shortcut-tag">Ctrl+Click</span> (or <span
+          class="shortcut-tag">Cmd+Click</span> on macOS) on any key string to perform this jump natively.
+      </p>
+    </div>
+  </section>
+
+  <!-- Trust & Privacy Section -->
+  <section id="trust" class="trust-section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <h2 class="section-title">Why Developers Trust JSON Key Finder</h2>
+        <p class="section-subtitle">
+          Engineered for privacy-conscious enterprise environments and security-focused developers.
+        </p>
+      </div>
+
+      <div class="trust-grid">
+        <div class="trust-card">
+          <div class="trust-card-icon icon-green">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+          </div>
+          <h3>100% Offline & Private</h3>
+          <p>Zero telemetry, zero external network requests, zero phone-home tracking. Your code, keys, and
+            configurations never leave your machine.</p>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-card-icon icon-blue">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <h3>ANTLR4 High-Speed Parser</h3>
+          <p>Industrial-strength AST parser indexes thousands of keys across massive multi-megabyte JSON trees in
+            milliseconds without freezing IDE UI.</p>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-card-icon icon-purple">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <h3>Incremental VFS Deltas</h3>
+          <p>Hooks directly into JetBrains' <code>BulkFileListener</code>. Only modified JSON files are re-parsed
+            incrementally, resulting in virtually zero background CPU usage.</p>
+        </div>
+
+        <div class="trust-card">
+          <div class="trust-card-icon icon-orange">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3>JetBrains Verified Listing</h3>
+          <p>Officially published, signed, and validated on the JetBrains Marketplace (Plugin ID: 15064). Open source
+            under the Apache 2.0 license.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Core Features Section -->
+  <section id="features" class="features-section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <h2 class="section-title">Packed with Developer Superpowers</h2>
+        <p class="section-subtitle">
+          Everything you need to navigate, locate, and maintain JSON keys across large codebases.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-badge badge-purple">NEW & FEATURED</span>
+          <h3>Ctrl+Click Navigation</h3>
+          <p>Click on any string literal matching a JSON key in Vue, React, Angular, Java, or Kotlin to jump directly to
+            its definition in the target JSON file.</p>
+          <div class="feature-snippet">
+            // Cmd+Click on "user.profile.name"<br />
+            t('user.profile.name') &rarr; <i>Jumps to en.json:42</i>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-blue">SPEED</span>
+          <h3>Dedicated Search Dialog</h3>
+          <p>Press <kbd>Ctrl+Alt+Shift+F</kbd> (or <kbd>Cmd+Shift+Option+F</kbd>) to open a lighting-fast modal with
+            live autocomplete and instant result filtering.</p>
+          <div class="feature-snippet">
+            Shortcut: <span style="color: var(--accent-blue);">Cmd + Shift + Option + F</span>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-green">FAVORITES</span>
+          <h3>Starred Default JSON Source</h3>
+          <p>Have multiple locale files? Click the star (⭐) next to any JSON file to pin it as your preferred source,
+            prioritizing it at the top of every search.</p>
+          <div class="feature-snippet">
+            ⭐ <b>en.json</b> (Pinned to top of search results)
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-blue">CONTEXT</span>
+          <h3>Right-Click Context Menu</h3>
+          <p>Highlight any key name in any editor window, right-click, and select "Find Key in JSON" to immediately see
+            all occurrences project-wide.</p>
+          <div class="feature-snippet">
+            Right Click &rarr; <b>Find Key in JSON</b>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-purple">INSPECTION</span>
+          <h3>Rich In-Line Context Preview</h3>
+          <p>See the surrounding JSON structure, parent objects, and line numbers directly inside the search popup
+            before navigating.</p>
+          <div class="feature-snippet">
+            Structure: <i>auth &rarr; login &rarr; title</i>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-green">AESTHETICS</span>
+          <h3>JetBrains Theme Aware</h3>
+          <p>Seamlessly blends into your IDE environment with complete support for IntelliJ New UI, Dark/Black theme,
+            and Light themes.</p>
+          <div class="feature-snippet">
+            Consistent font, colors, and border radius
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Section -->
+  <section id="comparison" class="comparison-section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <h2 class="section-title">JSON Key Finder vs. "Find in Files"</h2>
+        <p class="section-subtitle">
+          See why standard string search tools fall short when dealing with structured JSON dictionaries.
+        </p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Standard "Find in Files"</th>
+              <th>JSON Key Finder</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Direct Definition Jump (Ctrl+Click)</strong></td>
+              <td><span class="icon-cross">✕ No</span></td>
+              <td><span class="icon-check">✓ Instant Navigation</span></td>
+            </tr>
+            <tr>
+              <td><strong>Dotted-Path Matching (<code>user.profile.name</code>)</strong></td>
+              <td><span class="icon-cross">✕ Fails on nested JSON</span></td>
+              <td><span class="icon-check">✓ Full AST Object Resolution</span></td>
+            </tr>
+            <tr>
+              <td><strong>Filter Out Values & Comments</strong></td>
+              <td><span class="icon-cross">✕ Cluttered with noisy matches</span></td>
+              <td><span class="icon-check">✓ Exact Key Filtering</span></td>
+            </tr>
+            <tr>
+              <td><strong>Live Autocomplete & Suggestions</strong></td>
+              <td><span class="icon-cross">✕ None</span></td>
+              <td><span class="icon-check">✓ Real-time Autocomplete</span></td>
+            </tr>
+            <tr>
+              <td><strong>Pin Preferred / Default JSON Source</strong></td>
+              <td><span class="icon-cross">✕ Cannot prioritize</span></td>
+              <td><span class="icon-check">✓ Star (⭐) to Pin at Top</span></td>
+            </tr>
+            <tr>
+              <td><strong>Performance in 10,000+ Key Files</strong></td>
+              <td><span class="icon-cross">⚠️ Slow line-by-line grep</span></td>
+              <td><span class="icon-check">⚡ Pre-indexed In-Memory AST</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Supported IDEs Section -->
+  <section class="ides-section">
+    <div class="container">
+      <h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em;">
+        Compatible with all JetBrains IntelliJ Platform Products
+      </h3>
+      <div class="ide-logos-grid">
+        <div class="ide-pill">IntelliJ IDEA</div>
+        <div class="ide-pill">WebStorm</div>
+        <div class="ide-pill">PyCharm</div>
+        <div class="ide-pill">PhpStorm</div>
+        <div class="ide-pill">Android Studio</div>
+        <div class="ide-pill">GoLand</div>
+        <div class="ide-pill">Rider</div>
+        <div class="ide-pill">CLion</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section id="faq" class="faq-section">
+    <div class="container">
+      <div class="section-title-wrap">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <p class="section-subtitle">Got questions? We've got answers.</p>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item active">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How does Ctrl+Click navigation work?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            JSON Key Finder registers a custom PSI reference contributor into the IntelliJ Platform. When you Ctrl+Click
+            (or Cmd+Click on macOS) on any string literal matching a registered JSON key, the IDE seamlessly jumps
+            straight to the line where that key is defined inside your JSON file.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Does it handle nested JSON objects and dot notation?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Yes! If your JSON structure is <code>{ "auth": { "login": { "title": "..." } } }</code>, you can search for
+            either <code>auth.login.title</code> or simply <code>title</code>, and JSON Key Finder will accurately
+            locate it.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Is my code or data uploaded to any cloud server?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Never. The plugin is 100% offline. It contains no network libraries, no analytics, and no external
+            endpoints. All ANTLR4 parsing and indexing is strictly confined to your local IDE process.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How do I pin a preferred / default JSON file?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            When opening the search panel (<kbd>Ctrl+Alt+Shift+F</kbd>), click the star icon (⭐) next to any file path
+            in the results (e.g. <code>en.json</code>). That file will stay pinned at the top of your search results for
+            that project.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Box -->
+  <section class="cta-banner">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Boost Your Productivity Today</h2>
+        <p>Join thousands of developers saving hours every week navigating JSON localization bundles and configurations.
+        </p>
+        <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+          <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder" target="_blank" rel="noopener"
+            class="btn btn-primary btn-lg">
+            <span>Install from JetBrains Marketplace</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-links">
+        <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder">JetBrains Marketplace</a>
+        <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder/reviews">Report Issue</a>
+        <a href="https://plugins.jetbrains.com/plugin/15064-json-key-finder/reviews">Leave Review</a>
+      </div>
+      <p>&copy; 2026 Cristian Batusel / FilieraFusion. Released under the Apache 2.0 License.</p>
+      <p style="margin-top: 8px; font-size: 0.8rem;">JetBrains, IntelliJ IDEA, WebStorm, and PyCharm are trademarks of
+        JetBrains s.r.o.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Simulator jump logic
+    function simulateJump(keyId, lineNum) {
+      // Reset previous highlights
+      document.querySelectorAll('.json-highlight-target').forEach(el => el.classList.remove('json-highlight-target'));
+
+      const targetLine = document.getElementById('json-line-' + keyId);
+      const statusLabel = document.getElementById('jump-status');
+
+      if (targetLine) {
+        targetLine.classList.add('json-highlight-target');
+        statusLabel.textContent = 'Navigated to line ' + lineNum;
+        statusLabel.style.color = '#21D789';
+
+        targetLine.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // FAQ Accordion Toggle
+    function toggleFaq(header) {
+      const item = header.parentElement;
+      item.classList.toggle('active');
+    }
+  </script>
+</body>
+
+</html>
