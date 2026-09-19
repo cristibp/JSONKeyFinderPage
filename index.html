@@ -6,12 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Primary SEO Meta Tags -->
-  <title>JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs</title>
-  <meta name="title" content="JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs">
+  <title>JSON Key Finder — Search, Navigate &amp; Rename JSON Keys</title>
+  <meta name="title" content="JSON Key Finder — Search, Navigate &amp; Rename JSON Keys">
   <meta name="description"
-    content="Navigate and search JSON keys, localization bundles, and configurations in IntelliJ IDEA, WebStorm, PyCharm, and JetBrains IDEs with Ctrl+Click and instant ANTLR4 search. 100% offline & private.">
+    content="Find JSON keys with fuzzy search and scoped autocomplete, navigate with Ctrl+Click, and rename keys across your JetBrains project with preview and Undo/Redo. Runs locally in your IDE.">
   <meta name="keywords"
-    content="IntelliJ plugin, JSON key finder, i18n key search, JetBrains marketplace, WebStorm JSON navigation, translation key locator, react-intl, vue-i18n, PyCharm, PhpStorm, Android Studio, IDE plugin">
+    content="IntelliJ plugin, JSON key finder, JSON key rename, fuzzy search, search scopes, i18n refactoring, JetBrains marketplace, WebStorm JSON navigation, translation keys, vue-i18n, PyCharm, PhpStorm">
   <meta name="author" content="Cristian Batusel">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://cristibp.github.io/JSONKeyFinderPage/">
@@ -19,18 +19,18 @@
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://cristibp.github.io/JSONKeyFinderPage/">
-  <meta property="og:title" content="JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs">
+  <meta property="og:title" content="JSON Key Finder — Search, Navigate &amp; Rename JSON Keys">
   <meta property="og:description"
-    content="Ctrl+Click to jump directly to JSON key definitions in your JetBrains IDE. 100% offline, zero network requests, ANTLR4 AST indexing.">
+    content="Fuzzy key search, project and directory scopes, persistent favorites, and project-wide JSON key renaming with preview and Undo/Redo.">
   <meta property="og:image"
     content="https://raw.githubusercontent.com/cristibp/JSONKeyFinder/master/src/main/resources/META-INF/pluginIcon.svg">
 
   <!-- Twitter -->
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://cristibp.github.io/JSONKeyFinderPage/">
-  <meta property="twitter:title" content="JSON Key Finder — Fast JSON & i18n Key Navigation for JetBrains IDEs">
+  <meta property="twitter:title" content="JSON Key Finder — Search, Navigate &amp; Rename JSON Keys">
   <meta property="twitter:description"
-    content="Stop grepping through huge JSON localization bundles. Jump directly to definitions with Ctrl+Click or Cmd+Click.">
+    content="Search JSON paths with abbreviations and typos, jump to definitions, and rename keys with their descendant references across a file or project.">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml"
@@ -49,6 +49,8 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "JSON Key Finder",
+    "softwareVersion": "2026.3.0",
+    "softwareRequirements": "IntelliJ Platform 2025.3 or newer; minimum build 253.28294",
     "operatingSystem": "Windows, macOS, Linux",
     "applicationCategory": "DeveloperApplication",
     "offers": {
@@ -56,7 +58,7 @@
       "price": "0",
       "priceCurrency": "USD"
     },
-    "description": "JetBrains IDE plugin providing instant navigation and search for JSON keys and localization files with Ctrl+Click support and ANTLR4 indexing.",
+    "description": "Search JSON keys with abbreviations and typo tolerance, filter by project or directory scope, navigate with Ctrl+Click, and rename keys and descendant references with preview and Undo/Redo.",
     "url": "https://plugins.jetbrains.com/plugin/15064-json-key-finder",
     "author": {
       "@type": "Person",
@@ -1211,17 +1213,17 @@
     <div class="container">
       <div class="trust-badge-pill">
         <span class="pulse-dot"></span>
-        <span>100% Offline & Private — Verified JetBrains Marketplace Plugin</span>
+        <span>2026.3.0 — Search, Navigation &amp; Refactoring</span>
       </div>
 
       <h1 class="hero-title">
-        The Fastest Way to Find & Navigate<br />
+        Find, Navigate &amp; Rename<br />
         <span class="text-gradient">JSON Keys in JetBrains IDEs</span>
       </h1>
 
       <p class="hero-subtitle">
-        Stop grepping blindly through massive i18n localization bundles and configs.
-        <b>Ctrl+Click</b> directly from your code to JSON definitions with instant ANTLR4-powered indexing.
+        Find keys with fuzzy search, narrow results to the right scope, and <b>Ctrl+Click</b> to their definitions.
+        Rename JSON keys and descendant references across locale files with preview and Undo/Redo.
       </p>
 
       <div class="hero-actions">
@@ -1263,7 +1265,7 @@
           <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M5 13l4 4L19 7" />
           </svg>
-          <span><strong>Compatible:</strong> 2024.x – 2026.x</span>
+          <span><strong>Platform:</strong> IntelliJ 2025.3+</span>
         </div>
       </div>
     </div>
@@ -1447,13 +1449,48 @@
       <div class="section-title-wrap">
         <h2 class="section-title">Packed with Developer Superpowers</h2>
         <p class="section-subtitle">
-          Everything you need to navigate, locate, and maintain JSON keys across large codebases.
+          Search, navigate, and refactor JSON keys across large codebases.
+          <a href="https://github.com/cristibp/JSONKeyFinder/blob/master/CHANGELOG.md" target="_blank" rel="noopener">Read the 2026.3.0 release notes</a>.
         </p>
       </div>
 
       <div class="features-grid">
         <div class="feature-card">
-          <span class="feature-badge badge-purple">NEW & FEATURED</span>
+          <span class="feature-badge badge-purple">NEW: REFACTORING</span>
+          <h3>Rename Keys Across Your Project</h3>
+          <p>Place the caret on a JSON property and use <kbd>Shift+F6</kbd> or <b>Rename JSON Key…</b>.
+            Choose the current file or whole project, preview matching definitions and exact string references,
+            then apply the rename with conflict checks and Undo/Redo.</p>
+          <div class="feature-snippet">
+            user.<b>profile</b>.name &rarr; user.<b>account</b>.name<br />
+            Parent rename updates descendant and array paths
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-blue">FUZZY SEARCH</span>
+          <h3>Find Keys with Abbreviations &amp; Typos</h3>
+          <p>Search results and autocomplete recognize abbreviated paths, omitted separators, and small typos.
+            Exact matches rank first, followed by broader matches. Ctrl/Cmd+Click and rename keep using exact paths.</p>
+          <div class="feature-snippet">
+            usr.prof.name / user.profile.nmae<br />
+            &rarr; <b>user.profile.name</b>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-green">SEARCH SCOPES</span>
+          <h3>Focus on the Files You Need</h3>
+          <p>Search the project, a directory, a module, or a custom JetBrains scope. Choose whether to include
+            subdirectories. The same filter applies to results, autocomplete, and the Find tool window.</p>
+          <div class="feature-snippet">
+            Directory: <b>assets/i18n/</b><br />
+            Favorites are prioritized within the selected scope
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <span class="feature-badge badge-purple">NAVIGATION</span>
           <h3>Ctrl+Click Navigation</h3>
           <p>Click on any string literal matching a JSON key in Vue, React, Angular, Java, or Kotlin to jump directly to
             its definition in the target JSON file.</p>
@@ -1466,7 +1503,7 @@
         <div class="feature-card">
           <span class="feature-badge badge-blue">SPEED</span>
           <h3>Dedicated Search Dialog</h3>
-          <p>Press <kbd>Ctrl+Alt+Shift+F</kbd> (or <kbd>Cmd+Shift+Option+F</kbd>) to open a lighting-fast modal with
+          <p>Press <kbd>Ctrl+Alt+Shift+F</kbd> (or <kbd>Cmd+Shift+Option+F</kbd>) to open the search popup with
             live autocomplete and instant result filtering.</p>
           <div class="feature-snippet">
             Shortcut: <span style="color: var(--accent-blue);">Cmd + Shift + Option + F</span>
@@ -1475,19 +1512,19 @@
 
         <div class="feature-card">
           <span class="feature-badge badge-green">FAVORITES</span>
-          <h3>Starred Default JSON Source</h3>
-          <p>Have multiple locale files? Click the star (⭐) next to any JSON file to pin it as your preferred source,
-            prioritizing it at the top of every search.</p>
+          <h3>Multi-File Pinning &amp; Favorites</h3>
+          <p>Click the star (⭐) next to a JSON file to pin it. Favorites persist per project and keep their pin order
+            among equally relevant results within the selected scope. Unpin files independently or pin them again to reorder.</p>
           <div class="feature-snippet">
-            ⭐ <b>en.json</b> (Pinned to top of search results)
+            ⭐ <b>en.json, es.json</b> — Saved project favorites
           </div>
         </div>
 
         <div class="feature-card">
           <span class="feature-badge badge-blue">CONTEXT</span>
           <h3>Right-Click Context Menu</h3>
-          <p>Highlight any key name in any editor window, right-click, and select "Find Key in JSON" to immediately see
-            all occurrences project-wide.</p>
+          <p>Highlight a key path, right-click, and select <b>Find Key in JSON</b> to navigate to its definition.
+            When several JSON files contain that exact path, choose which file to open.</p>
           <div class="feature-snippet">
             Right Click &rarr; <b>Find Key in JSON</b>
           </div>
@@ -1557,9 +1594,19 @@
               <td><span class="icon-check">✓ Real-time Autocomplete</span></td>
             </tr>
             <tr>
-              <td><strong>Pin Preferred / Default JSON Source</strong></td>
+              <td><strong>Rename Keys &amp; Descendant References</strong></td>
+              <td><span class="icon-cross">✕ No structural rename</span></td>
+              <td><span class="icon-check">✓ Preview, Conflict Checks &amp; Undo/Redo</span></td>
+            </tr>
+            <tr>
+              <td><strong>Abbreviations &amp; Typo-Tolerant Key Search</strong></td>
+              <td><span class="icon-cross">✕ Literal text matching</span></td>
+              <td><span class="icon-check">✓ Fuzzy Results &amp; Autocomplete</span></td>
+            </tr>
+            <tr>
+              <td><strong>Pin Multiple Favorite JSON Files</strong></td>
               <td><span class="icon-cross">✕ Cannot prioritize</span></td>
-              <td><span class="icon-check">✓ Star (⭐) to Pin at Top</span></td>
+              <td><span class="icon-check">✓ Favorites (⭐) within Relevance &amp; Scope</span></td>
             </tr>
             <tr>
               <td><strong>Performance in 10,000+ Key Files</strong></td>
@@ -1576,7 +1623,7 @@
   <section class="ides-section">
     <div class="container">
       <h3 style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em;">
-        Compatible with all JetBrains IntelliJ Platform Products
+        Targets IntelliJ Platform 2025.3 and newer
       </h3>
       <div class="ide-logos-grid">
         <div class="ide-pill">IntelliJ IDEA</div>
@@ -1588,6 +1635,7 @@
         <div class="ide-pill">Rider</div>
         <div class="ide-pill">CLion</div>
       </div>
+      <p class="section-subtitle">Minimum generated build: 253.28294. Check the Marketplace listing for compatibility with your IDE build.</p>
     </div>
   </section>
 
@@ -1606,9 +1654,8 @@
             <span class="faq-toggle">▼</span>
           </div>
           <div class="faq-answer">
-            JSON Key Finder registers a custom PSI reference contributor into the IntelliJ Platform. When you Ctrl+Click
-            (or Cmd+Click on macOS) on any string literal matching a registered JSON key, the IDE seamlessly jumps
-            straight to the line where that key is defined inside your JSON file.
+            Ctrl+Click (or Cmd+Click on macOS) on a string matching an indexed JSON key path to navigate to its definition.
+            Navigation uses exact paths, even when you use abbreviations or typos in the search popup.
           </div>
         </div>
 
@@ -1637,13 +1684,56 @@
 
         <div class="faq-item">
           <div class="faq-question" onclick="toggleFaq(this)">
-            <span>How do I pin a preferred / default JSON file?</span>
+            <span>How do I rename a key across locale files and references?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Place the caret on the JSON property name and choose <b>Rename JSON Key…</b>, or use
+            <b>Refactor → Rename</b> (<kbd>Shift+F6</kbd>). Enter the new name, choose <b>Whole project</b>,
+            click <b>Preview</b>, review the matches, and select <b>Do Refactor</b>. Matching definitions in locale files
+            and exact string references are updated, including descendants and arrays. <b>Current file only</b>
+            restricts edits to that JSON file. Unsaved contents are included, and one Undo restores the operation.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Which references does rename update, and what stops it?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Rename matches exact, case-sensitive paths in quoted strings and attributes, including JSON string values.
+            Review these matches because a matching string can have another meaning. Dynamically assembled paths and
+            comments recognized by the language plugin are excluded. Invalid JSON, duplicate keys, conflicting or ambiguous
+            paths, and files changed after preview stop the operation before edits. Project scope respects IDE exclusions
+            and omits <code>node_modules</code>, <code>.git</code>, and <code>.idea</code>.
+            The new name changes one property; dots and brackets are literal characters and do not move it to another parent.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How can I search only a directory or module?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Select <b>Directory</b>, <b>Module</b>, or a custom JetBrains <b>Scope</b> in the search popup.
+            Directory paths may be relative to your project or absolute; use the subdirectories toggle to include nested folders.
+            Results, autocomplete, and the Find tool window use the same scope. Rename has a separate choice between
+            the current file and the whole project.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How do I pin favorite JSON files?</span>
             <span class="faq-toggle">▼</span>
           </div>
           <div class="faq-answer">
             When opening the search panel (<kbd>Ctrl+Alt+Shift+F</kbd>), click the star icon (⭐) next to any file path
-            in the results (e.g. <code>en.json</code>). That file will stay pinned at the top of your search results for
-            that project.
+            in the results (e.g. <code>en.json</code> or <code>es.json</code>). You can pin multiple files simultaneously;
+            they retain their pin order among equally relevant results within your selected scope. Favorites are saved
+            per project and restored after reopening the IDE. Click a filled star to unpin a file.
           </div>
         </div>
       </div>
