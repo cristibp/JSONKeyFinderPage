@@ -9,9 +9,9 @@
   <title>JSON Key Finder — Search, Navigate &amp; Rename JSON Keys</title>
   <meta name="title" content="JSON Key Finder — Search, Navigate &amp; Rename JSON Keys">
   <meta name="description"
-    content="Find JSON keys with fuzzy search and scoped autocomplete, navigate with Ctrl+Click, and rename keys across your JetBrains project with preview and Undo/Redo. Runs locally in your IDE.">
+    content="Find JSON keys with fuzzy search, navigate from code to JSON and from JSON keys to project usages, and rename keys with preview and Undo/Redo. Runs locally in your JetBrains IDE.">
   <meta name="keywords"
-    content="IntelliJ plugin, JSON key finder, JSON key rename, fuzzy search, search scopes, i18n refactoring, JetBrains marketplace, WebStorm JSON navigation, translation keys, vue-i18n, PyCharm, PhpStorm">
+    content="IntelliJ plugin, JSON key finder, find JSON key usages, bidirectional JSON navigation, JSON key rename, fuzzy search, search scopes, i18n refactoring, JetBrains marketplace, WebStorm JSON navigation, translation keys, vue-i18n, PyCharm, PhpStorm">
   <meta name="author" content="Cristian Batusel">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://cristibp.github.io/JSONKeyFinderPage/">
@@ -21,7 +21,7 @@
   <meta property="og:url" content="https://cristibp.github.io/JSONKeyFinderPage/">
   <meta property="og:title" content="JSON Key Finder — Search, Navigate &amp; Rename JSON Keys">
   <meta property="og:description"
-    content="Fuzzy key search, project and directory scopes, persistent favorites, and project-wide JSON key renaming with preview and Undo/Redo.">
+    content="Bidirectional JSON/code navigation, Find Usages in Project, fuzzy search, scoped results, favorites, and JSON key renaming with preview and Undo/Redo.">
   <meta property="og:image"
     content="https://raw.githubusercontent.com/cristibp/JSONKeyFinder/master/src/main/resources/META-INF/pluginIcon.svg">
 
@@ -30,7 +30,7 @@
   <meta property="twitter:url" content="https://cristibp.github.io/JSONKeyFinderPage/">
   <meta property="twitter:title" content="JSON Key Finder — Search, Navigate &amp; Rename JSON Keys">
   <meta property="twitter:description"
-    content="Search JSON paths with abbreviations and typos, jump to definitions, and rename keys with their descendant references across a file or project.">
+    content="Search JSON paths, jump from code to definitions, find code usages from JSON keys, and rename keys with their descendant references across a file or project.">
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml"
@@ -49,7 +49,7 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "JSON Key Finder",
-    "softwareVersion": "2026.3.0",
+    "softwareVersion": "2026.4.1",
     "softwareRequirements": "IntelliJ Platform 2025.3 or newer; minimum build 253.28294",
     "operatingSystem": "Windows, macOS, Linux",
     "applicationCategory": "DeveloperApplication",
@@ -58,7 +58,7 @@
       "price": "0",
       "priceCurrency": "USD"
     },
-    "description": "Search JSON keys with abbreviations and typo tolerance, filter by project or directory scope, navigate with Ctrl+Click, and rename keys and descendant references with preview and Undo/Redo.",
+    "description": "Search JSON keys, navigate from code to JSON definitions and from JSON keys to project usages, and rename keys and descendant references with preview and Undo/Redo.",
     "url": "https://plugins.jetbrains.com/plugin/15064-json-key-finder",
     "author": {
       "@type": "Person",
@@ -217,6 +217,16 @@
       display: flex;
       align-items: center;
       gap: 14px;
+    }
+
+    @media (min-width: 869px) and (max-width: 1100px) {
+      .nav-links {
+        gap: 14px;
+      }
+
+      .nav-links a {
+        font-size: 0.85rem;
+      }
     }
 
     /* Mobile Navigation Toggle */
@@ -537,6 +547,38 @@
     .simulator-header p {
       color: var(--text-secondary);
       font-size: 1rem;
+    }
+
+    .usage-walkthrough {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    .usage-walkthrough img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .usage-walkthrough figcaption {
+      margin: 14px 0 20px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .usage-steps {
+      max-width: 1040px;
+      margin: 24px auto 0;
+      padding-left: 24px;
+      color: var(--text-secondary);
+      line-height: 1.9;
+    }
+
+    .usage-steps strong {
+      color: var(--text-primary);
     }
 
     .ide-window {
@@ -937,6 +979,38 @@
       margin-top: auto;
     }
 
+    .feature-demo {
+      margin-top: 22px;
+    }
+
+    .feature-demo img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+    }
+
+    .feature-demo figcaption {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+    }
+
+    .feature-demo .btn {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+    }
+
+    .feature-demo a {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
     /* Comparison Table Section */
     .comparison-section {
       padding: 80px 0;
@@ -1180,6 +1254,7 @@
       <ul class="nav-links" id="nav-links">
         <li><a href="#features">Features</a></li>
         <li><a href="#demo">Interactive Demo</a></li>
+        <li><a href="#usages">Find Usages</a></li>
         <li><a href="#trust">Security & Trust</a></li>
         <li><a href="#comparison">Why Us?</a></li>
         <li><a href="#faq">FAQ</a></li>
@@ -1213,7 +1288,7 @@
     <div class="container">
       <div class="trust-badge-pill">
         <span class="pulse-dot"></span>
-        <span>2026.3.0 — Search, Navigation &amp; Refactoring</span>
+        <span>2026.4.0 — Bidirectional Navigation &amp; Refactoring</span>
       </div>
 
       <h1 class="hero-title">
@@ -1223,6 +1298,7 @@
 
       <p class="hero-subtitle">
         Find keys with fuzzy search, narrow results to the right scope, and <b>Ctrl+Click</b> to their definitions.
+        Go the other way with <b>Find Usages in Project</b> on a JSON property.
         Rename JSON keys and descendant references across locale files with preview and Undo/Redo.
       </p>
 
@@ -1385,6 +1461,73 @@
     </div>
   </section>
 
+  <!-- Bidirectional navigation walkthrough -->
+  <section id="usages" class="simulator-section">
+    <div class="container">
+      <div class="simulator-header">
+        <h2>From a JSON Key to Its Code Usages</h2>
+        <p>Follow a key from its definition to project references, then navigate back to JSON.</p>
+      </div>
+      <figure class="usage-walkthrough">
+        <img id="usage-animation" src="bidirectional-search.png" width="1400" height="1000" loading="lazy"
+          data-animated-src="bidirectional-search.gif" data-static-src="bidirectional-search.png"
+          alt="Real IDE captures: JSON definitions and code usages. Start from the property data[0].employee_name; Right-click and choose Find Usages in Project; Inspect 101 references in the native Find tool window; Open a code reference from the results; Cmd+Click the exact code string and choose its JSON definition.">
+        <figcaption>
+          Captured in the IntelliJ IDEA 2025.3 development IDE; appearance varies by theme. Searches exact full paths in JS, TS,
+          TSX, Java, Kotlin, PHP, HTML, Vue, JSON string values, and other project text files.
+        </figcaption>
+        <button id="usage-animation-toggle" type="button" class="btn btn-secondary" aria-pressed="false"
+          aria-controls="usage-animation" data-animation-target="usage-animation">Play animation</button>
+      </figure>
+      <ol class="usage-steps">
+        <li>Click the <strong>property name</strong> <code>"employee_name"</code> in <code>data[0]</code> in a valid JSON file.</li>
+        <li>Right-click and choose <strong>Find Usages in Project</strong>. The full path is <code>data[0].employee_name</code>.</li>
+        <li>Review references in the <strong>Find</strong> tool window and click a result to navigate to its source.</li>
+        <li><strong>Ctrl+Click</strong> the exact key string in code, or <strong>Cmd+Click</strong> on macOS, to return to a JSON definition.</li>
+      </ol>
+      <p class="simulator-hint">
+        Selecting a parent includes its known descendants and array paths. Unsaved contents are included;
+        project exclusions and language-recognized comments are omitted. This action uses the editor context menu
+        and has no default keyboard shortcut.
+      </p>
+    </div>
+  </section>
+
+  <!-- JSON rename walkthrough -->
+  <section id="rename-demo" class="simulator-section">
+    <div class="container">
+      <div class="simulator-header">
+        <h2>Rename a JSON Key and Its Project Occurrences</h2>
+        <p>Preview the matching locale definitions and code references before applying the change.</p>
+      </div>
+      <figure class="usage-walkthrough">
+        <img id="rename-animation" src="rename-json-key.png" width="1400" height="1000" loading="lazy"
+          data-animated-src="rename-json-key.gif" data-static-src="rename-json-key.png"
+          alt="Real IDE captures: Rename JSON Key. Place the caret on the JSON property to rename; Open Rename JSON Key with Shift+F6; Enter display_name and choose Whole project; Preview matching definitions and exact references; Review the changes before Refactor; this demo does not apply them.">
+        <figcaption>
+          Captured in the IntelliJ IDEA 2025.3 development IDE. The recording previews renaming
+          <code>data[0].employee_name</code> to <code>display_name</code> across the sample project.
+          It stops at the native refactoring preview; no rename is applied in the recording.
+        </figcaption>
+        <button id="rename-animation-toggle" type="button" class="btn btn-secondary" aria-pressed="false"
+          aria-controls="rename-animation" data-animation-target="rename-animation">Play animation</button>
+      </figure>
+      <ol class="usage-steps">
+        <li>Place the caret on the <strong>property name</strong> <code>"employee_name"</code> in <code>data[0]</code>.</li>
+        <li>Choose <strong>Rename JSON Key…</strong> from the editor context menu, or use <strong>Refactor → Rename</strong> (<kbd>Shift+F6</kbd>).</li>
+        <li>Enter <code>display_name</code>, select <strong>Whole project</strong>, and click <strong>Preview</strong>.</li>
+        <li>Review the matching JSON definitions and exact string references, then click <strong>Refactor</strong>.</li>
+        <li>After applying a rename, inspect the updated paths. One <strong>Undo/Redo</strong> restores or reapplies the operation across files.</li>
+      </ol>
+      <p class="simulator-hint">
+        <strong>Current file only</strong> restricts the operation to that JSON file. Whole-project scope includes
+        matching locale definitions and exact references to descendant and array paths. Values and formatting are
+        preserved. Invalid JSON, conflicting names, ambiguous paths, or files changed after preview stop the rename
+        before edits; dynamically assembled paths and language-recognized comments are excluded.
+      </p>
+    </div>
+  </section>
+
   <!-- Trust & Privacy Section -->
   <section id="trust" class="trust-section">
     <div class="container">
@@ -1449,12 +1592,35 @@
       <div class="section-title-wrap">
         <h2 class="section-title">Packed with Developer Superpowers</h2>
         <p class="section-subtitle">
-          Search, navigate, and refactor JSON keys across large codebases.
-          <a href="https://github.com/cristibp/JSONKeyFinder/blob/master/CHANGELOG.md" target="_blank" rel="noopener">Read the 2026.3.0 release notes</a>.
+          Search, navigate, and refactor JSON keys across large codebases.<br>
+          Real IDE captures below; appearance varies by IDE and theme.
+          <a href="https://github.com/cristibp/JSONKeyFinder/blob/master/CHANGELOG.md" target="_blank" rel="noopener">Read the 2026.4.1 release notes</a>.
         </p>
       </div>
 
       <div class="features-grid">
+        <div class="feature-card">
+          <span class="feature-badge badge-green">BIDIRECTIONAL NAVIGATION</span>
+          <h3>Find Code Usages from JSON</h3>
+          <p>Click a JSON property name, right-click, and choose <b>Find Usages in Project</b>.
+            Open exact references in the Find tool window, including descendants, array paths, and unsaved contents.</p>
+          <div class="feature-snippet">
+            JSON property &rarr; <b>Find Usages in Project</b> &rarr; code<br />
+            Code string &rarr; <b>Ctrl/Cmd+Click</b> &rarr; JSON definition
+          </div>
+          <figure class="feature-demo">
+            <img id="feature-bidirectional-search" src="bidirectional-search.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="bidirectional-search.gif" data-static-src="bidirectional-search.png"
+              alt="Real IDE captures: JSON definitions and code usages. Start from the property data[0].employee_name; Right-click and choose Find Usages in Project; Inspect 101 references in the native Find tool window; Open a code reference from the results; Cmd+Click the exact code string and choose its JSON definition.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-bidirectional-search" data-animation-target="feature-bidirectional-search">Play animation</button>
+              <a href="bidirectional-search.gif" target="_blank" rel="noopener" aria-label="Open bidirectional search GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
+        </div>
+
         <div class="feature-card">
           <span class="feature-badge badge-purple">NEW: REFACTORING</span>
           <h3>Rename Keys Across Your Project</h3>
@@ -1465,6 +1631,18 @@
             user.<b>profile</b>.name &rarr; user.<b>account</b>.name<br />
             Parent rename updates descendant and array paths
           </div>
+          <p><a href="#rename-demo">Watch the rename walkthrough →</a></p>
+          <figure class="feature-demo">
+            <img id="feature-rename-json-key" src="rename-json-key.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="rename-json-key.gif" data-static-src="rename-json-key.png"
+              alt="Real IDE captures: Rename JSON Key. Place the caret on the JSON property to rename; Open Rename JSON Key with Shift+F6; Enter display_name and choose Whole project; Preview matching definitions and exact references; Review the changes before Refactor; this demo does not apply them.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-rename-json-key" data-animation-target="feature-rename-json-key">Play animation</button>
+              <a href="rename-json-key.gif" target="_blank" rel="noopener" aria-label="Open rename json key GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1476,6 +1654,17 @@
             usr.prof.name / user.profile.nmae<br />
             &rarr; <b>user.profile.name</b>
           </div>
+          <figure class="feature-demo">
+            <img id="feature-fuzzy-search" src="fuzzy-search.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="fuzzy-search.gif" data-static-src="fuzzy-search.png"
+              alt="Real IDE captures: Fuzzy key search. Enable Fuzzy and start with a complete key path; Use an abbreviation: data0empname; Find matching definitions despite the typo employee_nmae.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-fuzzy-search" data-animation-target="feature-fuzzy-search">Play animation</button>
+              <a href="fuzzy-search.gif" target="_blank" rel="noopener" aria-label="Open fuzzy search GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1487,6 +1676,17 @@
             Directory: <b>assets/i18n/</b><br />
             Favorites are prioritized within the selected scope
           </div>
+          <figure class="feature-demo">
+            <img id="feature-search-scopes" src="search-scopes.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="search-scopes.gif" data-static-src="search-scopes.png"
+              alt="Real IDE captures: Search scopes. In Project: search all indexed JSON definitions; Directory: limit the search to a folder; Use a project-relative path to narrow the results; Module: an empty result means this module has no matching key; Scope: use an IDE search scope.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-search-scopes" data-animation-target="feature-search-scopes">Play animation</button>
+              <a href="search-scopes.gif" target="_blank" rel="noopener" aria-label="Open search scopes GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1498,6 +1698,17 @@
             // Cmd+Click on "user.profile.name"<br />
             t('user.profile.name') &rarr; <i>Jumps to en.json:42</i>
           </div>
+          <figure class="feature-demo">
+            <img id="feature-direct-navigation" src="direct-navigation.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="direct-navigation.gif" data-static-src="direct-navigation.png"
+              alt="Real IDE captures: Code-to-JSON navigation. Locate an exact JSON key path in a code string; Cmd+Click: choose between matching JSON definitions; The editor opens the selected JSON property.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-direct-navigation" data-animation-target="feature-direct-navigation">Play animation</button>
+              <a href="direct-navigation.gif" target="_blank" rel="noopener" aria-label="Open direct navigation GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1508,6 +1719,17 @@
           <div class="feature-snippet">
             Shortcut: <span style="color: var(--accent-blue);">Cmd + Shift + Option + F</span>
           </div>
+          <figure class="feature-demo">
+            <img id="feature-search-dialog" src="search-dialog.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="search-dialog.gif" data-static-src="search-dialog.png"
+              alt="Real IDE captures: Dedicated search dialog. Open Find JSON Key in project; Type part of a key to filter indexed definitions; Inspect matching files and the JSON preview; Narrow the search to data[0].employee_name.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-search-dialog" data-animation-target="feature-search-dialog">Play animation</button>
+              <a href="search-dialog.gif" target="_blank" rel="noopener" aria-label="Open search dialog GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1518,6 +1740,17 @@
           <div class="feature-snippet">
             ⭐ <b>en.json, es.json</b> — Saved project favorites
           </div>
+          <figure class="feature-demo">
+            <img id="feature-pinned-favorites" src="pinned-favorites.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="pinned-favorites.gif" data-static-src="pinned-favorites.png"
+              alt="Real IDE captures: Multiple favorite JSON files. Filled stars identify the existing favorite files; Click an empty star to pin another JSON file; Favorites remain pinned when the dialog is reopened; Unpin one file while keeping the other favorites.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-pinned-favorites" data-animation-target="feature-pinned-favorites">Play animation</button>
+              <a href="pinned-favorites.gif" target="_blank" rel="noopener" aria-label="Open pinned favorites GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1528,6 +1761,17 @@
           <div class="feature-snippet">
             Right Click &rarr; <b>Find Key in JSON</b>
           </div>
+          <figure class="feature-demo">
+            <img id="feature-context-menu" src="context-menu.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="context-menu.gif" data-static-src="context-menu.png"
+              alt="Real IDE captures: Find Key in JSON. Select the exact key path in your source file; Right-click and choose Find Key in JSON; The real file chooser lists matching JSON files; Select the definition you want to open; Navigate to the matching JSON property.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-context-menu" data-animation-target="feature-context-menu">Play animation</button>
+              <a href="context-menu.gif" target="_blank" rel="noopener" aria-label="Open context menu GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1538,6 +1782,17 @@
           <div class="feature-snippet">
             Structure: <i>auth &rarr; login &rarr; title</i>
           </div>
+          <figure class="feature-demo">
+            <img id="feature-context-preview" src="context-preview.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="context-preview.gif" data-static-src="context-preview.png"
+              alt="Real IDE captures: JSON context preview. Inspect the selected property in its surrounding JSON structure; See sibling properties, values, and line numbers; Inspect matching keys in another JSON file before navigating.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-context-preview" data-animation-target="feature-context-preview">Play animation</button>
+              <a href="context-preview.gif" target="_blank" rel="noopener" aria-label="Open context preview GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
         </div>
 
         <div class="feature-card">
@@ -1548,6 +1803,36 @@
           <div class="feature-snippet">
             Consistent font, colors, and border radius
           </div>
+          <figure class="feature-demo">
+            <img id="feature-theme-integration" src="theme-integration.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="theme-integration.gif" data-static-src="theme-integration.png"
+              alt="Real IDE captures: Native IntelliJ styling. The actual search dialog in Islands Dark; Native popup menus and selection colors in Islands Light; The real light-theme search dialog and syntax-highlighted JSON preview.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-theme-integration" data-animation-target="feature-theme-integration">Play animation</button>
+              <a href="theme-integration.gif" target="_blank" rel="noopener" aria-label="Open theme integration GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
+
+        </div>
+        <div class="feature-card">
+          <span class="feature-badge badge-blue">HISTORY</span>
+          <h3>Recent Search History</h3>
+          <p>Open <b>Recent Searches</b> to reuse a previous query, or use <kbd>Alt+Up</kbd> and
+            <kbd>Alt+Down</kbd> to move through your search history.</p>
+          <div class="feature-snippet">
+            Recent Searches &rarr; <b>user.profile.name</b>
+          </div>
+          <figure class="feature-demo">
+            <img id="feature-search-history" src="search-history.png" width="1400" height="1000" loading="lazy"
+              data-animated-src="search-history.gif" data-static-src="search-history.png"
+              alt="Real IDE captures: Recent searches. Start from the current search query; Open the native Recent Searches dropdown; Choose a previous query to reuse it.">
+            <figcaption>
+              <button type="button" class="btn btn-secondary" aria-pressed="false"
+                aria-controls="feature-search-history" data-animation-target="feature-search-history">Play animation</button>
+              <a href="search-history.gif" target="_blank" rel="noopener" aria-label="Open search history GIF at full size">Open full-size GIF</a>
+            </figcaption>
+          </figure>
         </div>
       </div>
     </div>
@@ -1573,6 +1858,11 @@
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><strong>Find Code Usages from a JSON Property</strong></td>
+              <td><span class="icon-cross">✕ Manual text search</span></td>
+              <td><span class="icon-check">✓ Full paths, descendants &amp; navigable results</span></td>
+            </tr>
             <tr>
               <td><strong>Direct Definition Jump (Ctrl+Click)</strong></td>
               <td><span class="icon-cross">✕ No</span></td>
@@ -1648,6 +1938,32 @@
       </div>
 
       <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>How do I access Find Usages in Project?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Click a property name in valid JSON, right-click, and choose <b>Find Usages in Project</b>.
+            For example, <code>save</code> under <code>common</code> searches for <code>common.save</code>.
+            Click a result in the Find tool window to open its source. Selecting a parent includes its known
+            descendants and array paths. This custom action currently has no default shortcut.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question" onclick="toggleFaq(this)">
+            <span>Why is the usage action missing, or why are some files absent?</span>
+            <span class="faq-toggle">▼</span>
+          </div>
+          <div class="faq-answer">
+            Install a plugin build containing this feature and restart the IDE if prompted. Place the caret on a
+            property name in valid JSON. Expected source folders must be project content roots and must not be
+            excluded. Search matches exact, case-sensitive strings and quoted attributes; partial strings and
+            dynamically assembled paths are excluded. Matching strings may have other meanings, so inspect the results.
+          </div>
+        </div>
+
         <div class="faq-item active">
           <div class="faq-question" onclick="toggleFaq(this)">
             <span>How does Ctrl+Click navigation work?</span>
@@ -1690,7 +2006,7 @@
           <div class="faq-answer">
             Place the caret on the JSON property name and choose <b>Rename JSON Key…</b>, or use
             <b>Refactor → Rename</b> (<kbd>Shift+F6</kbd>). Enter the new name, choose <b>Whole project</b>,
-            click <b>Preview</b>, review the matches, and select <b>Do Refactor</b>. Matching definitions in locale files
+            click <b>Preview</b>, review the matches, and select <b>Refactor</b>. Matching definitions in locale files
             and exact string references are updated, including descendants and arrays. <b>Current file only</b>
             restricts edits to that JSON file. Unsaved contents are included, and one Undo restores the operation.
           </div>
@@ -1775,6 +2091,21 @@
   </footer>
 
   <script>
+    // Each walkthrough has independent controls and a static overview for reduced motion.
+    document.querySelectorAll('button[data-animation-target]').forEach(toggle => {
+      const animation = document.getElementById(toggle.dataset.animationTarget);
+      if (!animation) return;
+      function setAnimation(playing) {
+        animation.src = playing ? animation.dataset.animatedSrc : animation.dataset.staticSrc;
+        toggle.textContent = playing ? 'Pause animation' : 'Play animation';
+        toggle.setAttribute('aria-pressed', String(playing));
+      }
+      setAnimation(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      toggle.addEventListener('click', () => {
+        setAnimation(toggle.getAttribute('aria-pressed') !== 'true');
+      });
+    });
+
     // Simulator jump logic
     function simulateJump(keyId, lineNum) {
       // Reset previous highlights
